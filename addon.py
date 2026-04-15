@@ -56,7 +56,8 @@ args = urllib.parse.parse_qs(query_string)
 if addon_handle != -1:
     xbmcplugin.setContent(addon_handle, 'songs')
 
-Addon = xbmcaddon.Addon("plugin.audio.tilos")
+# Removed global Addon initialization
+# Addon = xbmcaddon.Addon("plugin.audio.tilos")
 
 mode = args.get('mode', None)
 
