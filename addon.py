@@ -75,7 +75,16 @@ def log(msg):
 def buildURL(query):
     if not query:
         return base_url
-    return base_url + '?' + urllib.parse.urlencode(query)
+    
+    # Handle list values properly from parse_qs if we are re-encoding them
+    encoded_query = {}
+    for k, v in query.items():
+        if isinstance(v, list) and len(v) == 1:
+            encoded_query[k] = v[0]
+        else:
+            encoded_query[k] = v
+            
+    return base_url + '?' + urllib.parse.urlencode(encoded_query)
 
 
 def getURL(url):
@@ -256,6 +265,8 @@ def listShowsByDay(year, month, day):
     endLocal = int(endLocal * 1000)
 
     page_data = getURL(BASE_URL_EPISODES_BY_DATE % (startLocal, endLocal))
+    if not page_data:
+        return
     jdata = json.loads(page_data)
 
     startLocal = startLocal-60*60*1
@@ -297,6 +308,8 @@ def listShows(type):
     log(' > listShows(%s)' % type)
   
     page_data = getURL(BASE_URL_SHOWS)  
+    if not page_data:
+        return
     jdata = json.loads(page_data)
 
     for list in jdata:
@@ -316,8 +329,9 @@ def listShows(type):
 def listShow(alias, name):
     log(' > listShow(%s, %s)' % (alias, name))
     
-    # Get Show information
     page_data = getURL("%s/%s" % (BASE_URL_SHOWS, alias))
+    if not page_data:
+        return
     show = json.loads(page_data)
     
     artist = ''
@@ -377,6 +391,8 @@ def getCurrentShowName():
     now *= 1000
 
     page_data = getURL(BASE_URL_EPISODES_BY_DATE % (start, end))
+    if not page_data:
+        return ''
     jdata = json.loads(page_data)
  
     for episode in jdata:
@@ -414,6 +430,8 @@ def listSoundStoreCategory(category):
     log(' > listSoundStoreCategory(%s)' % category)
 
     page_data = getURL('%s?category=%s' % (BASE_URL_SOUNDSTORE, category))  
+    if not page_data:
+        return
     jdata = json.loads(page_data)
 
     playlist = xbmc.PlayList(0)
