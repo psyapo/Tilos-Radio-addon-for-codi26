@@ -45,11 +45,15 @@ LIVE_URL_128 = 'http://stream.tilos.hu/tilos_128.mp3'
 # dialogProgress = xbmcgui.DialogProgress()
 # dialog = xbmcgui.Dialog()
 
-base_url = sys.argv[0]
-addon_handle = int(sys.argv[1])
-args = urllib.parse.parse_qs(sys.argv[2][1:])
+base_url = sys.argv[0] if len(sys.argv) > 0 else ""
+addon_handle = int(sys.argv[1]) if len(sys.argv) > 1 else -1
 
-xbmcplugin.setContent(addon_handle, 'songs')
+query_string = sys.argv[2][1:] if len(sys.argv) > 2 and len(sys.argv[2]) > 1 else ""
+args = urllib.parse.parse_qs(query_string)
+
+if addon_handle != -1:
+    xbmcplugin.setContent(addon_handle, 'songs')
+
 Addon = xbmcaddon.Addon("plugin.audio.tilos")
 
 mode = args.get('mode', None)
@@ -539,5 +543,9 @@ try:
              )
 except Exception as e:
     import traceback
-    xbmcgui.Dialog().ok("Tilos Addon Error", str(e) + "\n" + traceback.format_exc()[:200])
+    try:
+        xbmcgui.Dialog().ok("Tilos Addon Error", str(e) + "\n" + traceback.format_exc()[:300])
+    except:
+        pass
+    xbmc.log("TILOS ADDON ERROR: " + str(e) + "\n" + traceback.format_exc(), xbmc.LOGFATAL)
 
