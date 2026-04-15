@@ -25,7 +25,7 @@ import re
 ############################################
 
 __plugin__ = "Tilos"
-__version__ = '0.0.5'
+__version__ = '0.0.10'
 __author__ = 'Gabor Boros'
 __date__ = '2014-07-28'
 __addon__ = xbmcaddon.Addon()
@@ -45,6 +45,8 @@ LIVE_URL_128 = 'http://stream.tilos.hu/tilos_128.mp3'
 # dialogProgress = xbmcgui.DialogProgress()
 # dialog = xbmcgui.Dialog()
 
+xbmc.log("TILOS PLUGIN START: SYS_ARGV=" + str(sys.argv), xbmc.LOGINFO)
+
 base_url = sys.argv[0] if len(sys.argv) > 0 else ""
 addon_handle = int(sys.argv[1]) if len(sys.argv) > 1 else -1
 
@@ -58,7 +60,7 @@ Addon = xbmcaddon.Addon("plugin.audio.tilos")
 
 mode = args.get('mode', None)
 
-debug = False
+debug = True
 
 ############################################
 # Functions
