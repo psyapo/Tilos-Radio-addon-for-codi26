@@ -130,26 +130,27 @@ def listRootMenu():
     log(' > listRootMenu()')
 
     name = getCurrentShowName()
-    li = xbmcgui.ListItem('%s [I]%s[/I]' % (getString(30007), getUString(name)), thumbnailImage=name)
+    li = xbmcgui.ListItem('%s [I]%s[/I]' % (getString(30007), getUString(name)))
+    li.setArt({'thumb': name})
     xbmcplugin.addDirectoryItem(handle=addon_handle, url=LIVE_URL_256, listitem=li, isFolder=False)
 
-    li = xbmcgui.ListItem('%s [I]%s[/I]' % (getString(30008), getUString(getCurrentShowName())), iconImage='')
+    li = xbmcgui.ListItem('%s [I]%s[/I]' % (getString(30008), getUString(getCurrentShowName())))
     xbmcplugin.addDirectoryItem(handle=addon_handle, url=LIVE_URL_128, listitem=li, isFolder=False)
 
     url = buildURL({'mode': 'listByDateYear', 'foldername': getString(30009)})
-    li = xbmcgui.ListItem(getString(30009), iconImage='')
+    li = xbmcgui.ListItem(getString(30009))
     xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li, isFolder=True)
 
     url = buildURL({'mode': 'musicShows', 'foldername': getString(30002)})
-    li = xbmcgui.ListItem(getString(30002), iconImage='')
+    li = xbmcgui.ListItem(getString(30002))
     xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li, isFolder=True)
   
     url = buildURL({'mode': 'talkShows', 'foldername': getString(30001)})
-    li = xbmcgui.ListItem(getString(30001), iconImage='')
+    li = xbmcgui.ListItem(getString(30001))
     xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li, isFolder=True)
 
     url = buildURL({'mode': 'listSoundStore', 'foldername': getString(30012)})
-    li = xbmcgui.ListItem(getString(30012), iconImage = '')
+    li = xbmcgui.ListItem(getString(30012))
     xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li, isFolder=True)
 
     xbmcplugin.endOfDirectory(addon_handle)
@@ -159,16 +160,16 @@ def listYear():
     log(' > listYear()')
     
     url = buildURL({'mode': 'listByToday', 'foldername': getString(30010)})
-    li = xbmcgui.ListItem(getString(30010), iconImage = '')
+    li = xbmcgui.ListItem(getString(30010))
     xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li, isFolder=True)
     
     url = buildURL({'mode': 'listByYesterday', 'foldername': getString(30011)})
-    li = xbmcgui.ListItem(getString(30011), iconImage = '')
+    li = xbmcgui.ListItem(getString(30011))
     xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li, isFolder=True)
 
     for year in range(datetime.date.today().year, 2008, -1):
         url = buildURL({'mode': '%s_%s' % ('listByDateMonth', str(year)), 'foldername': str(year)})
-        li = xbmcgui.ListItem(str(year), iconImage = '')
+        li = xbmcgui.ListItem(str(year))
         xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li, isFolder=True)
         
     xbmcplugin.endOfDirectory(addon_handle)
@@ -230,7 +231,7 @@ def listMonth(year):
 
     for month in months:
         url = buildURL({'mode': '%s_%s_%s' % ('listByDateDay', str(year), str(month)), 'foldername': month})
-        li = xbmcgui.ListItem(getMonthName(month), iconImage = '')
+        li = xbmcgui.ListItem(getMonthName(month))
         xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li, isFolder=True)
         
     xbmcplugin.endOfDirectory(addon_handle)
@@ -249,7 +250,7 @@ def listDay(year, month):
     for day in range(days[1], 0, -1):
         url = buildURL({'mode': 'showsByDay_%s_%s_%s' % (year, month, str(day)),
         'foldername': '%s_%s_%s' % (year, month, str(day))})
-        li = xbmcgui.ListItem("%d - %s" % (day, getDayName(calendar.weekday(int(year), int(month), day))), iconImage = '')
+        li = xbmcgui.ListItem("%d - %s" % (day, getDayName(calendar.weekday(int(year), int(month), day))))
         xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li, isFolder=True)
          
     xbmcplugin.endOfDirectory(addon_handle)
