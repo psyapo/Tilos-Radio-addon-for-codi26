@@ -41,8 +41,9 @@ HEADERS = {'User-Agent' : 'XBMC Plugin v0.0.4'}
 LIVE_URL_256 = 'http://stream.tilos.hu/tilos'
 LIVE_URL_128 = 'http://stream.tilos.hu/tilos_128.mp3'
 
-dialogProgress = xbmcgui.DialogProgress()
-dialog = xbmcgui.Dialog()
+# Removed global dialog definitions to prevent startup crashes in Kodi 19+
+# dialogProgress = xbmcgui.DialogProgress()
+# dialog = xbmcgui.Dialog()
 
 base_url = sys.argv[0]
 addon_handle = int(sys.argv[1])
@@ -86,6 +87,22 @@ def buildURL(query):
             
     return base_url + '?' + urllib.parse.urlencode(encoded_query)
 
+
+def set_music_info(li, title, artist='', year=''):
+    try:
+        # Kodi 20/21+ new InfoTag API
+        info = li.getMusicInfoTag()
+        info.setTitle(str(title))
+        if artist:
+            info.setArtist([str(artist)])
+        if year:
+            try:
+                info.setYear(int(year))
+            except ValueError:
+                pass
+    except AttributeError:
+        # Fallback for Kodi 19 and older
+        li.setInfo('music', {'title': str(title), 'artist': str(artist), 'year': str(year)})
 
 def getURL(url):
     log(' > getURL(%s)' % (url))
@@ -286,10 +303,7 @@ def listShowsByDay(year, month, day):
                                  show['name'])
 
             li = xbmcgui.ListItem(title)
-
-            li.setInfo('music', {'title': title,
-                                 'artist': show['name'],
-                                 'year': year})
+            set_music_info(li, title, show['name'], year)
             li.setProperty('IsPlayable', 'false')
 
             url = re.sub('.m3u', '.mp3', episode['m3uUrl'])
@@ -313,13 +327,13 @@ def listShows(type):
         return
     jdata = json.loads(page_data)
 
-    for list in jdata:
-        if list['type'] == type:
-            url = buildURL({'mode': '%s_%s_%s' % ('list', getUString(list['alias']), getUString(list['name'])), 'foldername': getUString(list['name'])})
-            li = xbmcgui.ListItem(getUString(list['name']))
+    for list_val in jdata:
+        if list_val['type'] == type:
+            url = buildURL({'mode': '%s_%s_%s' % ('list', getUString(list_val['alias']), getUString(list_val['name'])), 'foldername': getUString(list_val['name'])})
+            li = xbmcgui.ListItem(getUString(list_val['name']))
 
-            if 'definition' in list:
-                li.setInfo('music', {'title': list['definition']})
+            if 'definition' in list_val:
+                set_music_info(li, list_val['definition'])
 
             xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li, isFolder=True)
             
@@ -364,10 +378,7 @@ def listShow(alias, name):
             li = xbmcgui.ListItem(episode_date)
 
             title = '%s %s' % (name, episode_date)
-            li.setInfo('music', {'title': title,
-                                 'artist': artist,
-                                 'year': episode_year})
-
+            set_music_info(li, title, artist, episode_year)
             li.setProperty('IsPlayable', 'false')
             url = re.sub('.m3u', '.mp3', episode['m3uUrl'])
 
@@ -439,21 +450,19 @@ def listSoundStoreCategory(category):
     playlist.clear()
 
     showPos = 0
-    for list in jdata:
-        itemDate = list['date'] + ": " if 'date' in list else ''
-        itemAuthor = list['author'] + ": " if list['author'] != '' else ''
+    for list_val in jdata:
+        itemDate = list_val['date'] + ": " if 'date' in list_val else ''
+        itemAuthor = list_val['author'] + ": " if list_val['author'] != '' else ''
 
         li = xbmcgui.ListItem('%s[B]%s[/B]%s' % (getUString(itemDate),
                                                  getUString(itemAuthor),
-                                                 getUString(list['title'])))
-
-        li.setInfo('music', {'title': list['title'],
-                             'artist': list['author'],
-                             'year': itemDate})
+                                                 getUString(list_val['title'])))
+        
+        set_music_info(li, list_val['title'], list_val['author'], itemDate)
         li.setProperty('IsPlayable', 'false')
 
         mp3Url = buildURL({'mode': 'playURL',
-                            'url': list['link'],
+                            'url': list_val['link'],
                             'pos': showPos,
                             })
 
@@ -481,49 +490,54 @@ def play(url, pos):
 # Start plugin
 ############################################
 
-if mode is None:
-    listRootMenu()
-elif mode[0] == 'talkShows':
-    listShows('SPEECH')
-elif mode[0] == 'musicShows':
-    listShows('MUSIC')
-elif mode[0].startswith('list_'):
-    listShow(mode[0].split('_')[1], mode[0].split('_')[2])
-elif mode[0].startswith('listByDateYear'):
-    listYear()
-elif mode[0].startswith('listByDateMonth'):
-    listMonth(mode[0].split('_')[1:][0])
-elif mode[0].startswith('listByDateDay'):
-    listDay(mode[0].split('_')[1], mode[0].split('_')[2])
-elif mode[0].startswith('listByToday'):
-    year = str(datetime.date.today().year)
-    month = str(datetime.date.today().month)
-    day = str(datetime.date.today().day)
-    listShowsByDay(year, month, day)    
-elif mode[0].startswith('listByYesterday'):
-    yesterday = datetime.date.today() - datetime.timedelta(days=1)
-    year = str(yesterday.year)
-    month = str(yesterday.month)
-    day = str(yesterday.day)
-    listShowsByDay(year, month, day)    
-elif mode[0].startswith('showsByDay'):
-    year = mode[0].split('_')[1]
-    month = mode[0].split('_')[2]
-    day = mode[0].split('_')[3]
-    listShowsByDay(year, month, day)    
-elif mode[0] == 'listSoundStore':
-    listSoundStore()
-elif mode[0] == 'listSoundStoreTALE':
-    listSoundStoreCategory('TALE')
-elif mode[0] == 'listSoundStoreDJ':
-    listSoundStoreCategory('DJ')
-elif mode[0] == 'listSoundStoreGUESTDJ':
-    listSoundStoreCategory('GUESTDJ')
-elif mode[0] == 'listSoundStorePARTY':
-    listSoundStoreCategory('PARTY')
-elif mode[0] == 'listSoundStoreSHOW':
-    listSoundStoreCategory('SHOW')
-elif mode[0] == 'playURL':
-    play(args.get('url', None),
-         args.get('pos', None)
-         )
+try:
+    if mode is None:
+        listRootMenu()
+    elif mode[0] == 'talkShows':
+        listShows('SPEECH')
+    elif mode[0] == 'musicShows':
+        listShows('MUSIC')
+    elif mode[0].startswith('list_'):
+        listShow(mode[0].split('_')[1], mode[0].split('_')[2])
+    elif mode[0].startswith('listByDateYear'):
+        listYear()
+    elif mode[0].startswith('listByDateMonth'):
+        listMonth(mode[0].split('_')[1:][0])
+    elif mode[0].startswith('listByDateDay'):
+        listDay(mode[0].split('_')[1], mode[0].split('_')[2])
+    elif mode[0].startswith('listByToday'):
+        year = str(datetime.date.today().year)
+        month = str(datetime.date.today().month)
+        day = str(datetime.date.today().day)
+        listShowsByDay(year, month, day)    
+    elif mode[0].startswith('listByYesterday'):
+        yesterday = datetime.date.today() - datetime.timedelta(days=1)
+        year = str(yesterday.year)
+        month = str(yesterday.month)
+        day = str(yesterday.day)
+        listShowsByDay(year, month, day)    
+    elif mode[0].startswith('showsByDay'):
+        year = mode[0].split('_')[1]
+        month = mode[0].split('_')[2]
+        day = mode[0].split('_')[3]
+        listShowsByDay(year, month, day)    
+    elif mode[0] == 'listSoundStore':
+        listSoundStore()
+    elif mode[0] == 'listSoundStoreTALE':
+        listSoundStoreCategory('TALE')
+    elif mode[0] == 'listSoundStoreDJ':
+        listSoundStoreCategory('DJ')
+    elif mode[0] == 'listSoundStoreGUESTDJ':
+        listSoundStoreCategory('GUESTDJ')
+    elif mode[0] == 'listSoundStorePARTY':
+        listSoundStoreCategory('PARTY')
+    elif mode[0] == 'listSoundStoreSHOW':
+        listSoundStoreCategory('SHOW')
+    elif mode[0] == 'playURL':
+        play(args.get('url', None),
+             args.get('pos', None)
+             )
+except Exception as e:
+    import traceback
+    xbmcgui.Dialog().ok("Tilos Addon Error", str(e) + "\n" + traceback.format_exc()[:200])
+
