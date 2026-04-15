@@ -73,7 +73,9 @@ def log(msg):
 
 
 def buildURL(query):
-    return base_url + '?' + urllib.parse.urlencode('' if query is None else query)
+    if not query:
+        return base_url
+    return base_url + '?' + urllib.parse.urlencode(query)
 
 
 def getURL(url):
@@ -101,7 +103,7 @@ def getURL(url):
             log(e.reason)
         
     else:
-        return response.read()
+        return response.read().decode('utf-8', errors='ignore')
         
     
 def getString(stringID):
