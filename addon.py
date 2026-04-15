@@ -25,11 +25,11 @@ import re
 ############################################
 
 __plugin__ = "Tilos"
-__version__ = '0.0.10'
+__version__ = '0.0.12'
 __author__ = 'Gabor Boros'
 __date__ = '2014-07-28'
-__addon__ = xbmcaddon.Addon()
-__addonname__ = __addon__.getAddonInfo('name')
+# __addon__ = xbmcaddon.Addon()
+# __addonname__ = __addon__.getAddonInfo('name')
 
 BASE_URL = 'https://tilos.hu'
 BASE_URL_PAGE = 'https://tilos.hu/page'
@@ -48,7 +48,7 @@ LIVE_URL_128 = 'http://stream.tilos.hu/tilos_128.mp3'
 xbmc.log("TILOS PLUGIN START: SYS_ARGV=" + str(sys.argv), xbmc.LOGINFO)
 
 base_url = sys.argv[0] if len(sys.argv) > 0 else ""
-addon_handle = int(sys.argv[1]) if len(sys.argv) > 1 else -1
+addon_handle = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1] != '-1' and sys.argv[1] != '' else -1
 
 query_string = sys.argv[2][1:] if len(sys.argv) > 2 and len(sys.argv[2]) > 1 else ""
 args = urllib.parse.parse_qs(query_string)
@@ -122,12 +122,20 @@ def getURL(url):
         if hasattr(e, 'reason'):
             log(getString(30003))
             log(getString(30004) + str(e.reason))
-            xbmcgui.Dialog().ok(__addonname__, getString(30003), '', getString(30004) + str(e.reason))
+            try:
+                addonname = xbmcaddon.Addon().getAddonInfo('name')
+                xbmcgui.Dialog().ok(addonname, getString(30003), '', getString(30004) + str(e.reason))
+            except:
+                pass
      
         elif hasattr(e, 'code'):
             log(getString(30005))
             log(getString(30006) + str(e.code))
-            xbmcgui.Dialog().ok(__addonname__, getString(30005), '', getString(30006) + str(e.code))
+            try:
+                addonname = xbmcaddon.Addon().getAddonInfo('name')
+                xbmcgui.Dialog().ok(addonname, getString(30005), '', getString(30006) + str(e.code))
+            except:
+                pass
     
     except Exception as e:
         
@@ -139,7 +147,11 @@ def getURL(url):
         
     
 def getString(stringID):
-    return getUString(__addon__.getLocalizedString(stringID))
+    try:
+        addon = xbmcaddon.Addon()
+        return getUString(addon.getLocalizedString(stringID))
+    except:
+        return ""
     
 
 def getUString(string):
