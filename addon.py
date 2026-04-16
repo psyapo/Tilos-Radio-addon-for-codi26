@@ -101,15 +101,25 @@ def set_music_info(li, title, artist='', year=''):
         info = li.getMusicInfoTag()
         info.setTitle(str(title))
         if artist:
-            info.setArtist([str(artist)])
+            try:
+                info.setArtist([str(artist)])
+            except TypeError:
+                info.setArtist(str(artist))
+            except:
+                pass
         if year:
             try:
                 info.setYear(int(year))
-            except ValueError:
+            except:
                 pass
     except AttributeError:
         # Fallback for Kodi 19 and older
-        li.setInfo('music', {'title': str(title), 'artist': str(artist), 'year': str(year)})
+        try:
+            li.setInfo('music', {'title': str(title), 'artist': str(artist), 'year': str(year)})
+        except:
+            pass
+    except:
+        pass
 
 def getURL(url):
     log(' > getURL(%s)' % (url))
@@ -388,7 +398,7 @@ def listShow(alias, name):
         showPos = 0
         for episode in jdata_episode:
 
-            if episode['persistent'] == 'false' or 'm3uUrl' not in episode:
+            if not episode.get('persistent', True) or not episode.get('m3uUrl'):
                 continue
 
             episode_date = time.strftime('%Y-%m-%d %H:%M', time.localtime(episode['plannedFrom']/1000))
@@ -517,7 +527,11 @@ try:
     elif mode[0] == 'musicShows':
         listShows('MUSIC')
     elif mode[0].startswith('list_'):
-        listShow(mode[0].split('_')[1], mode[0].split('_')[2])
+        parts = mode[0].split('_', 2)
+        if len(parts) >= 3:
+            listShow(parts[1], parts[2])
+        else:
+            listShow(parts[1], '')
     elif mode[0].startswith('listByDateYear'):
         listYear()
     elif mode[0].startswith('listByDateMonth'):
@@ -536,10 +550,9 @@ try:
         day = str(yesterday.day)
         listShowsByDay(year, month, day)    
     elif mode[0].startswith('showsByDay'):
-        year = mode[0].split('_')[1]
-        month = mode[0].split('_')[2]
-        day = mode[0].split('_')[3]
-        listShowsByDay(year, month, day)    
+        parts = mode[0].split('_', 3)
+        if len(parts) >= 4:
+            listShowsByDay(parts[1], parts[2], parts[3])    
     elif mode[0] == 'listSoundStore':
         listSoundStore()
     elif mode[0] == 'listSoundStoreTALE':
